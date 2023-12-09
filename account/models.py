@@ -29,7 +29,8 @@ class User(AbstractBaseUser):
     is_staff = models.BooleanField(help_text='staff 권한 여부', default=False)
     is_superuser = models.BooleanField(help_text='root 권한 여부', default=False)
     is_active = models.BooleanField(help_text='계정 활성화 여부', default=True)
-
+    purchase_car = models.CharField(help_text='구매한 차', blank=True)
+    sale_car = models.CharField(help_text='구매한 차', blank=True)
     created_at = models.DateTimeField(help_text='생성일', verbose_name='date joined', auto_now_add=True)
     updated_at = models.DateTimeField(help_text='변경일', auto_now=True)
     last_login = models.DateTimeField(help_text='마지막 로그인', blank=True, null=True)
@@ -41,3 +42,7 @@ class User(AbstractBaseUser):
 
     def __str__(self):
         return self.username
+
+    @property
+    def is_admin(self):
+        return self.is_superuser
