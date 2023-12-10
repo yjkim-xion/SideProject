@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 class Car(models.Model):
     name = models.CharField(max_length=100)
     brand = models.CharField(max_length=100)
+    vin = models.CharField(max_length=10, unique=True)
     base_price = models.IntegerField()
 
     def __str__(self):
