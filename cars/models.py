@@ -1,10 +1,10 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 
 
 class Car(models.Model):
-    name = models.CharField(max_length=100)
-    brand = models.CharField(max_length=100)
+    name = models.CharField(help_text='차 이름',max_length=100)
+    brand = models.CharField(help_text='차 브랜드',max_length=100)
     vin = models.CharField(max_length=10, unique=True)
     base_price = models.IntegerField()
 
@@ -25,19 +25,19 @@ class Version(models.Model):
 
 class CarSales(models.Model):
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='sales')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='purchases')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='purchases')
     sale_date = models.DateField()
     sale_price = models.IntegerField()
 
 
 class UsedCarSales(models.Model):
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='used_sales')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='used_purchases')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='used_purchases')
     sale_date = models.DateField()
     sale_price = models.IntegerField()
     discount_rate = models.IntegerField()
 
-    def discount_price(self):
+    def discount_price(self):  # 할인된 가격 생성
         discounted_price = self.sale_price * (1 - (self.discount_rate / 100))
         return int(discounted_price)
 
