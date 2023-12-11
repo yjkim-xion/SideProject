@@ -19,6 +19,8 @@ class UserAdmin(BaseUserAdmin):
     add_form = CustomUserCreationForm
 
     list_display = ('username', 'is_staff', 'purchase_car', 'sale_car')
+    search_fields = ('username', 'purchase_car', 'sale_car',)
+    readonly_fields = ('purchase_car', 'sale_car', 'created_at', 'last_login')
     list_filter = ('is_staff',)
 
     fieldsets = (  # 사용자 상세페이지에 나오는 값들 / 이름, 비밀번호 빼고 작성하지 않아도됨
@@ -34,7 +36,7 @@ class UserAdmin(BaseUserAdmin):
         }),
     )
 
-    search_fields = ('username',)
+
     ordering = ('username',)
     filter_horizontal = ()
 

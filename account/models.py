@@ -32,6 +32,7 @@ class User(AbstractBaseUser):
     sale_car = models.CharField(help_text='판매한 차', max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(help_text='생성일', verbose_name='date joined', auto_now_add=True)
     updated_at = models.DateTimeField(help_text='변경일', auto_now=True)
+    last_login = models.DateTimeField(verbose_name='last login', auto_now=True)
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = []
@@ -46,6 +47,7 @@ class User(AbstractBaseUser):
 
     def has_module_perms(self, app_label):
         return self.is_superuser
+
     @property
     def is_admin(self):
         return self.is_superuser
