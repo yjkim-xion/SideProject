@@ -20,8 +20,7 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser):
-    idx = models.BigAutoField(primary_key=True)
-
+    id = models.BigAutoField(primary_key=True)
     username = models.CharField(help_text='유저 명', max_length=255, unique=True)
     password = models.CharField(help_text='유저 패스워드', max_length=128)
 

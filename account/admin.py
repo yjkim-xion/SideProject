@@ -36,8 +36,7 @@ class UserAdmin(BaseUserAdmin):
         }),
     )
 
-
-    ordering = ('username',)
+    ordering = ['username']
     filter_horizontal = ()
 
 
