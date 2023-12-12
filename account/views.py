@@ -1,13 +1,23 @@
 from rest_framework import status
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.hashers import check_password
 from rest_framework.views import APIView
-
 from account.models import User
 from account.serializers import UserSerializer
+from django.contrib.auth import logout
+from django.contrib.auth.hashers import make_password
+from rest_framework.permissions import IsAuthenticated
+# from rest_framework import generics
+# from .serializers import RegisterSerializer
 
 
+# class RegisterView(generics.CreateAPIView):
+#     queryset = User.objects.all()
+#     serializer_class = RegisterSerializer
+
+# 로그인
 class UserLoginAPI(APIView):
     def post(self, request):
         username = request.data['username']
@@ -43,11 +53,33 @@ class UserLoginAPI(APIView):
                 },
                 status=status.HTTP_200_OK
             )
-            print(response)
+
             response.set_cookie("access_token", access_token, httponly=True)
             response.set_cookie("refresh_token", refresh_token, httponly=True)
             return response
         else:
             return Response(
-                {"message": "로그인에 실패하였습니다."}, status=status.HTTP_400_BAD_REQUEST
-            )
+                {"message": "로그인에 실패하였습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# 로그아웃
+class LogoutAPIView(APIView):
+
+    def post(self, request):
+        logout(request)
+        response = Response({"message": "로그아웃 되었습니다."}, status=status.HTTP_200_OK)
+        response.delete_cookie('access_token')
+        response.delete_cookie('refresh_token')
+        return response
+
+
+# 비밀번호만 수정
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request,):
+        user = request.user
+        new_password = request.data.get('new_password')
+        user.password = make_password(new_password)
+        user.save()
+        return Response({'message': '비밀번호가 변경되었습니다.'}, status=status.HTTP_200_OK)
