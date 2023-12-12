@@ -38,6 +38,7 @@ class UsedCarSales(models.Model):
     sale_price = models.IntegerField()
     discount_rate = models.IntegerField()
 
+    # noinspection PyTypeChecker
     def discount_price(self):  # 할인된 가격 생성
         discounted_price = self.sale_price * (1 - (self.discount_rate / 100))
         return int(discounted_price)
