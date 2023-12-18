@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from .models import User
+from .serializers import UserSerializer
 
 
 class CustomUserChangeForm(UserChangeForm):
@@ -18,14 +19,22 @@ class UserAdmin(BaseUserAdmin):
     form = CustomUserChangeForm
     add_form = CustomUserCreationForm
 
-    list_display = ('username', 'is_staff', 'purchase_car', 'sale_car')
-    search_fields = ('username', 'purchase_car', 'sale_car',)
-    readonly_fields = ('purchase_car', 'sale_car', 'created_at', 'last_login')
+    def purchased_cars(self, obj):
+        serializer = UserSerializer(obj)
+        return serializer.get_purchased_cars(obj)
+
+    def sold_cars(self, obj):
+        serializer = UserSerializer(obj)
+        return serializer.get_sold_cars(obj)
+
+    list_display = ('username', 'is_staff',)
+    search_fields = ('username',)
+    readonly_fields = ('purchased_cars', 'sold_cars', 'created_at', 'last_login')
     list_filter = ('is_staff',)
 
     fieldsets = (  # 사용자 상세페이지에 나오는 값들 / 이름, 비밀번호 빼고 작성하지 않아도됨
         (None, {'fields': ('username', 'password')}),
-        ('Personal info', {'fields': ('purchase_car', 'sale_car')}),
+        ('Personal info', {'fields': ('purchased_cars', 'sold_cars',)}),
         ('Permissions', {'fields': ('is_staff', 'is_superuser', 'is_active')}),
     )
 

@@ -27,8 +27,6 @@ class User(AbstractBaseUser):
     is_staff = models.BooleanField(help_text='staff 권한 여부', default=False)
     is_superuser = models.BooleanField(help_text='root 권한 여부', default=False)
     is_active = models.BooleanField(help_text='계정 활성화 여부', default=True)
-    purchase_car = models.CharField(help_text='구매한 차', max_length=100, blank=True, null=True)
-    sale_car = models.CharField(help_text='판매한 차', max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(help_text='생성일', verbose_name='date joined', auto_now_add=True)
     updated_at = models.DateTimeField(help_text='변경일', auto_now=True)
     last_login = models.DateTimeField(verbose_name='last login', auto_now=True)
