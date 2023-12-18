@@ -6,10 +6,10 @@ from account.models import User
 class Car(models.Model):
     name = models.CharField(help_text='차 이름', max_length=100)
     brand = models.CharField(help_text='차 브랜드', max_length=100)
-    is_sold = models.BooleanField(default=False)
     vin = models.CharField(help_text='식별변호', max_length=10, unique=True)
     version = models.IntegerField(help_text='버전')
     price = models.IntegerField(help_text='가격')
+    is_sold = models.BooleanField(default=False, null=False)
 
     def __str__(self):
         return self.name
