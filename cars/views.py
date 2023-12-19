@@ -81,7 +81,6 @@ class ReturnCarAPI(generics.GenericAPIView):
 
 # 판매(중고차행)
 class SellUsedCarAPI(generics.CreateAPIView):
-    # permission_classes = [IsAuthenticated]
     serializer_class = UsedCarSalesSerializer
 
     def post(self, request, *args, **kwargs):
@@ -95,7 +94,6 @@ class SellUsedCarAPI(generics.CreateAPIView):
         discount_rate = version * 10
 
         if not CarSales.objects.filter(car=car, user=request.user).exists():
-            # print('00000',car, (request.user))
             return Response({'error': '소유한 차만 판매가능합니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not car.is_car_sold:
@@ -114,18 +112,25 @@ class SellUsedCarAPI(generics.CreateAPIView):
             sale_price=discounted_price,
             discount_rate=discount_rate
         )
-        #print('11111')
         sales_record = CarSales.objects.filter(car=car).first()
-        #print(sales_record, '22222')
+
         if sales_record:
             sales_record.delete()
-        #print('33333')
+
         car.is_sold = False
         car.save()
-        #print('44444')
-        # Car.objects.update(name=name, brand=brand, version=version, price=discounted_price)
+
         car.price = discounted_price
-        #print('*****',discounted_price)
         car.save()
-        #print('55555')
+
         return Response({'message': 'Car sold', 'discounted_price': discounted_price}, status=status.HTTP_201_CREATED)
+
+
+class VersionAPI(generics.ListAPIView):
+    serializer_class = CarSerializer
+
+    def get_queryset(self):
+        version = self.kwargs.get('version')
+        return Car.objects.filter(version=version)
+
+
