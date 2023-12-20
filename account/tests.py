@@ -1,19 +1,22 @@
 from django.test import TestCase
-# from django.contrib.auth.models import User
+from django.urls import reverse
+from rest_framework import status
+
+from cars.models import CarSales, Car
+from cars.views import PurchaseCarAPI
 from unittest import mock
 from datetime import datetime
-from rest_framework import status
-from rest_framework.test import APIClient
-from rest_framework.test import APITestCase
+from rest_framework.test import APIClient,APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
 
 
+
 # 유저로그인
 class UserModelTest(TestCase):
-    def test_default_values(self):
+    def test_login(self):
         client = APIClient()
-        mock_date = datetime(2023,12,19,15,53,45)
+        mock_date = datetime.now()
         with mock.patch('django.utils.timezone.now') as mock_now:
             mock_now.return_value = mock_date
             user = User.objects.create(username='test2', password='xion123!')
@@ -23,6 +26,7 @@ class UserModelTest(TestCase):
             client.credentials(
                 HTTP_AUTHORIZATION=f"Bearer {access}"
             )
+
             self.assertEquals(user.username, 'test2')
             self.assertEquals(user.password, 'xion123!')
             self.assertEquals(user.is_active, True)
@@ -31,6 +35,63 @@ class UserModelTest(TestCase):
             self.assertEquals(user.created_at, mock_date)
             self.assertEquals(user.updated_at, mock_date)
             self.assertEquals(user.last_login, mock_date)
+
+
+class PurchaseCarAPITestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(username='test2', password='xion123!')
+        self.car = Car.objects.create(
+            brand='TestBrand',
+            name='TestName',
+            price=10000,
+            version=1,
+            is_sold=False
+        )
+        self.url = reverse('cars:purchases')  # 장고 템플릿 url처럼 작성해야함
+
+    def test_purchase_car(self):
+        self.client.force_authenticate(user=self.user)
+        data = {'brand': self.car.brand, 'name': self.car.name}
+        response = self.client.post(self.url, data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], 'Purchase successful')
+        self.assertEqual(response.data['vin'], self.car.vin)
+        self.assertEqual(response.data['price'], self.car.price)
+        self.assertEqual(response.data['version'], self.car.version)
+
+        self.car.refresh_from_db()
+        self.assertTrue(self.car.is_sold)
+        self.assertTrue(CarSales.objects.filter(car=self.car, user=self.user).exists())
+
+
+class RetrunCarAPITestcase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(username='test2', password='xion123!')
+        self.car = Car.objects.create(
+            brand='TestBrand',
+            name='TestName',
+            price=10000,
+            version=1,
+            vin='wer123wer',
+            is_sold=True
+        )
+        self.sales_record = CarSales.objects.filter(car=self.car).first()
+        self.url = reverse('cars:returnCar')
+
+    def test_return_car(self):
+        self.client.force_authenticate(user=self.user)
+        data = {'name': self.car.name, 'version': self.car.version, 'vin': self.car.vin}
+        response = self.client.post(self.url, data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], '반품 처리 되었습니다.')
+
+        self.car.refresh_from_db()
+        self.client.delete(self.sales_record)
+        self.assertFalse(self.car.is_sold)
 
 
 

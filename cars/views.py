@@ -3,39 +3,28 @@ from rest_framework import generics, mixins, serializers, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from account.models import User
-from .models import Car, CarSales, UsedCarSales
+from .models import Car, CarSales, UsedCarSales, Version
 from django.shortcuts import get_object_or_404
-from .serializers import CarSerializer, CarSalesSerializer, UsedCarSalesSerializer
+from .serializers import CarSerializer, CarSalesSerializer, UsedCarSalesSerializer, VersionSerializer
 
 
 # 자동차 전체 목록
-class CarsListAPI(generics.GenericAPIView, mixins.ListModelMixin):
+class CarsListAPI(generics.ListAPIView):
     permission_classes = []
     serializer_class = CarSerializer
-
-    def get_queryset(self):
-        return Car.objects.all().order_by('id')
-
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+    queryset = Car.objects.all().order_by('id')
 
 
 # 자동차 디테일
-class CarsDetailAPI(generics.GenericAPIView, mixins.RetrieveModelMixin):
+class CarsDetailAPI(generics.RetrieveAPIView):
+    permission_classes = []
     serializer_class = CarSerializer
+    queryset = Car.objects.all()
 
-    def get_queryset(self):
-        return Car.objects.all().order_by('id')
-
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
-
-    # def post(self,request,):
 
 
 # 구매
 class PurchaseCarAPI(generics.GenericAPIView):
-    # permission_classes = [IsAuthenticated]
     serializer_class = CarSerializer
 
     def post(self, request, *args, **kwargs):
@@ -76,7 +65,7 @@ class ReturnCarAPI(generics.GenericAPIView):
         car.is_sold = False
         car.save()
 
-        return Response({'message': '반품 처리되었습니다.'}, status=status.HTTP_200_OK)
+        return Response({'message': '반품 처리 되었습니다.'}, status=status.HTTP_200_OK)
 
 
 # 판매(중고차행)
@@ -126,7 +115,9 @@ class SellUsedCarAPI(generics.CreateAPIView):
         return Response({'message': 'Car sold', 'discounted_price': discounted_price}, status=status.HTTP_201_CREATED)
 
 
+# 버전별 모든 자동차
 class VersionAPI(generics.ListAPIView):
+    permission_classes = []
     serializer_class = CarSerializer
 
     def get_queryset(self):
@@ -134,3 +125,11 @@ class VersionAPI(generics.ListAPIView):
         return Car.objects.filter(version=version)
 
 
+# 자동차별 버전
+class CarVersionsAPI(generics.ListAPIView):
+    permission_classes = []
+    serializer_class = VersionSerializer
+
+    def get_queryset(self):
+        car_id = self.kwargs.get('car_id')
+        return Version.objects.filter(car_id=car_id)

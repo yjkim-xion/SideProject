@@ -18,49 +18,34 @@ class Car(models.Model):
     def is_car_sold(self):
         return CarSales.objects.filter(car=self).exists()
 
-    def add_feature(self, feature_name):
-        self.features[feature_name] = {"added": True, "removed": False}
 
-    def remove_feature(self, feature_name):
-        if feature_name in self.features:
-            self.features[feature_name]["added"] = False
-            self.features[feature_name]["removed"] = True
+class Version(models.Model):
+    car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='cars')
+    versions = models.IntegerField()
+    added_features = models.JSONField(default=list)
+    removed_features = models.JSONField(default=list)
+    price = models.IntegerField(help_text='버전별 가격')
 
-    def has_feature(self, feature_name):
-        return self.features.get(feature_name, {"added": False, "removed": False})
+    #
+    # def update_features(self):
+    #     if self.versions == 1:
+    #         self.added_features = ['핸들열선', '크루즈컨트롤']
+    #         self.removed_features = []
+    #
+    #     elif self.versions == 2:
+    #         self.added_features = ['자동주차']
+    #         self.removed_features = ['핸들열선']
+    #
+    #     elif self.versions == 3:
+    #         self.added_features = ['자율주행', '비행기모드']
+    #         self.removed_features = ['크루즈컨트롤']
 
-    def update_features_version(self):
-        if self.version == 1:
-            self.add_feature('핸들열선')
-            self.add_feature('크루즈컨트롤')
-        elif self.version == 2:
-            self.add_feature('자동주차')
-            self.remove_feature('핸들열선')
-        else:
-            self.add_feature('자율주행')
-            self.add_feature('비행기모드')
-            self.remove_feature('크루즈컨트롤')
+    # def save(self, *args, **kwargs):
+    #     self.update_features()
+    #     super().save(*args, **kwargs)
 
-    def save(self, *args, **kwargs):
-        self.update_features_version()
-        super().save(*args, **kwargs)
-
-
-# class Version(models.Model):
-#     versions = {
-#         ('버전선택','버전선택'),
-#         ('1','버전1'),
-#         ('2','버전2'),
-#         ('3','버전3'),
-#     }
-#     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='cars')
-#     versions = models.CharField(max_length=80, choices=versions, default='버전선택')
-#     added_features = models.TextField(null=True, blank=True)
-#     removed_features = models.TextField(null=True, blank=True)
-#     price = models.IntegerField(help_text='버전별 가격')
-#
-#     def __str__(self):
-#         return f"{self.car.name} - ver.{self.versions}"
+    def __str__(self):
+        return f"{self.car.name} - ver.{self.versions}"
 
 
 class CarSales(models.Model):
