@@ -2,14 +2,13 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 
-from cars.models import CarSales, Car
+from cars.models import CarSales, Car, UsedCarSales
 from cars.views import PurchaseCarAPI
 from unittest import mock
 from datetime import datetime
-from rest_framework.test import APIClient,APITestCase
+from rest_framework.test import APIClient, APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
-
 
 
 # 유저로그인
@@ -37,6 +36,7 @@ class UserModelTest(TestCase):
             self.assertEquals(user.last_login, mock_date)
 
 
+# 구매 테스트
 class PurchaseCarAPITestCase(TestCase):
     def setUp(self):
         self.client = APIClient()
@@ -66,6 +66,7 @@ class PurchaseCarAPITestCase(TestCase):
         self.assertTrue(CarSales.objects.filter(car=self.car, user=self.user).exists())
 
 
+# 반품 테스트
 class RetrunCarAPITestcase(TestCase):
     def setUp(self):
         self.client = APIClient()
@@ -94,4 +95,38 @@ class RetrunCarAPITestcase(TestCase):
         self.assertFalse(self.car.is_sold)
 
 
+# 판매 테스트 (중고차행)
+class SellUsedCarAPITestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(username='test2', password='xion123!')
+        self.car = Car.objects.create(
+            brand='TestBrand',
+            name='TestName',
+            price=10000,
+            version=1,
+            vin='wer123wer',
+            is_sold=True
+        )
+        self.discount_rate = self.car.version * 10
+        self.discounted_price = self.car.price * (1 - (self.discount_rate / 100))
+        CarSales.objects.create(car=self.car, user=self.user)
+        self.sales_record = CarSales.objects.filter(car=self.car).first()
+        self.url = reverse('cars:sellcars')
 
+    def test_sell_car(self):
+        self.client.force_authenticate(user=self.user)
+
+        data = {'name': self.car.name, 'brand': self.car.brand, 'version': self.car.version}
+        response = self.client.post(self.url, data, format='json')
+        print(response.data)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['discounted_price'], self.discounted_price)
+
+        self.car.refresh_from_db()
+        self.assertFalse(self.car.is_sold)
+        self.assertEqual(self.car.price, self.discounted_price)
+
+        self.assertTrue(UsedCarSales.objects.filter(car=self.car, user=self.user).exists())
+        self.assertFalse(CarSales.objects.filter(car=self.car).exists())

@@ -26,8 +26,8 @@ class UserLoginAPI(APIView):
     def post(self, request):
         username = request.data['username']
         password = request.data['password']
-        print(username)
-        print(password)
+        # print(username)
+        # print(password)
         user = User.objects.filter(username=username).first()
 
         # 만약 username에 맞는 user가 존재하지 않는다면
@@ -48,9 +48,9 @@ class UserLoginAPI(APIView):
             user.save(update_fields=['last_login'])
             token = TokenObtainPairSerializer.get_token(user)  # refresh 토큰 생성
             refresh_token = str(token)  # refresh 토큰 문자열
-            print(refresh_token)
+            # print(refresh_token)
             access_token = str(token.access_token)  # access 토큰 문자열
-            print(access_token)
+            # print(access_token)
             response = Response(
                 {
                     "user": UserSerializer(user).data,

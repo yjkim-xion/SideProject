@@ -3,14 +3,20 @@ from django.conf import settings
 from account.models import User
 
 
+class Feature(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
 class Car(models.Model):
     name = models.CharField(help_text='차 이름', max_length=100)
     brand = models.CharField(help_text='차 브랜드', max_length=100)
     vin = models.CharField(help_text='식별변호', max_length=10, unique=True)
-    version = models.IntegerField(help_text='버전')
     price = models.IntegerField(help_text='가격')
     is_sold = models.BooleanField(default=False, null=False)
-    features = models.JSONField(default=dict)
+    features = models.ManyToManyField(Feature, related_name='cars')
 
     def __str__(self):
         return self.name
@@ -22,27 +28,33 @@ class Car(models.Model):
 class Version(models.Model):
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='cars')
     versions = models.IntegerField()
-    added_features = models.JSONField(default=list)
-    removed_features = models.JSONField(default=list)
+    added_features = models.ManyToManyField(Feature, related_name='added_to_versions')
+    removed_features = models.ManyToManyField(Feature, related_name='removed_from_versions')
     price = models.IntegerField(help_text='버전별 가격')
 
-    #
-    # def update_features(self):
-    #     if self.versions == 1:
-    #         self.added_features = ['핸들열선', '크루즈컨트롤']
-    #         self.removed_features = []
-    #
-    #     elif self.versions == 2:
-    #         self.added_features = ['자동주차']
-    #         self.removed_features = ['핸들열선']
-    #
-    #     elif self.versions == 3:
-    #         self.added_features = ['자율주행', '비행기모드']
-    #         self.removed_features = ['크루즈컨트롤']
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
 
-    # def save(self, *args, **kwargs):
-    #     self.update_features()
-    #     super().save(*args, **kwargs)
+        self.added_features.clear()
+        self.removed_features.clear()
+
+        if self.versions == 1:
+            feature1 = Feature.objects.get_or_create(name='핸들열선')
+            feature2 = Feature.objects.get_or_create(name='크루즈컨트롤')
+            self.added_features.add(feature1, feature2)
+
+        elif self.versions == 2:
+            feature3 = Feature.objects.get_or_create(name='자동주차')
+            feature1 = Feature.objects.get_or_create(name='핸들열선')
+            self.added_features.add(feature3)
+            self.removed_features.add(feature1)
+
+        elif self.versions == 3:
+            feature4 = Feature.objects.get_or_create(name='자율주행')
+            feature5 = Feature.objects.get_or_create(name='비행기모드')
+            feature2 = Feature.objects.get_or_create(name='크루즈컨트롤')
+            self.added_features.add(feature4, feature5)
+            self.removed_features.add(feature2)
 
     def __str__(self):
         return f"{self.car.name} - ver.{self.versions}"
@@ -62,9 +74,9 @@ class UsedCarSales(models.Model):
     sale_price = models.IntegerField()
     discount_rate = models.IntegerField()
 
-    def discount_price(self):  # 할인된 가격 생성
-        discounted_price = self.sale_price * (1 - (self.discount_rate / 100))
-        return int(discounted_price)
+    # def discount_price(self):  # 할인된 가격 생성
+    #     discounted_price = self.sale_price * (1 - (self.discount_rate / 100))
+    #     return int(discounted_price)
 
     def is_exists(self):
         return UsedCarSales.objects.filter(car=self).exists()
