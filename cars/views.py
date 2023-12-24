@@ -41,7 +41,7 @@ class PurchaseCarAPI(generics.GenericAPIView):
         CarSales.objects.create(car=car, user=request.user, sale_date=now(), sale_price=car.price)
         car.is_sold = True
         car.save()
-        return Response({'message': 'Purchase successful', 'vin': car.vin, 'price': car.price,})
+        return Response({'message': 'Purchase successful', 'vin': car.vin, 'price': car.price})
 
 
 # 반품
@@ -53,7 +53,7 @@ class ReturnCarAPI(generics.GenericAPIView):
         vin = request.data.get('vin')
         car = get_object_or_404(Car, name=name, vin=vin)
 
-        if not car.is_car_sold:
+        if not car.is_sold:
             return Response({'error': '이 차량은 판매할 수 없습니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
         sales_record = CarSales.objects.filter(car=car).first()
@@ -78,14 +78,13 @@ class SellUsedCarAPI(generics.CreateAPIView):
 
         car = get_object_or_404(Car, brand=brand, name=name, vin=vin)
         print(car)
-        versions = get_object_or_404(Version,versions=versions)
         print(versions)
         discount_rate = versions * 10
 
         if not CarSales.objects.filter(car=car, user=request.user).exists():
             return Response({'error': '소유한 차만 판매가능합니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not car.is_car_sold:
+        if not car.is_sold:
             return Response({'error': '이 차량은 판매할 수 없습니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if UsedCarSales.objects.filter(car=car, user=request.user).exists():
